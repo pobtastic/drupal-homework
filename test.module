@@ -1,0 +1,89 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Homework Test module for review.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function test_menu() {
+  $items['test'] = array(
+    'title' => t('Test Page'),
+    'description' => t('Sample page for testing output.'),
+    'page callback' => 'test_output',
+    'access callback' => user_access('access test page'),
+  );
+  $items['test/%test'] = array(
+    'title callback' => 'test_title',
+    'title arguments' => array(1),
+    'description' => t('Sample page for testing output.'),
+    'page callback' => 'test_output',
+    'page arguments' => array(1),
+    'access callback' => user_access('access test page'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_help().
+ */
+function test_help() {
+  if (arg(0) == 'test') {
+    return "Select which content-type to show content for, additionally use the
+      text field as a search key to filter your results.";
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function test_perm() {
+  return array('access test page');
+}
+
+function test_title($title) {
+  return t("Testing for '!title':", array("!title" => $title));
+}
+
+function test_load($input) {
+  return strtoupper($input);
+}
+
+function test_output($info = '', $type = '') {
+  $output = [];
+  $output['nodes']['#theme'] = 'item_list';
+  $query = db_query("SELECT nid FROM node WHERE type = '$type' AND title LIKE '%$info%'");
+  foreach ($query as $node) {
+    $node = node_load($node->nid);
+    $output['nodes']['#items'][] = $node->title;
+  }
+  $output['form'] = drupal_get_form('test_output_2');
+  return $output;
+}
+
+function test_output_2() {
+  $form['info'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Type something'),
+  );
+  $form['types'] = array(
+    '#type' => 'select',
+    '#title' => 'Select a content type',
+    '#options' => node_type_get_names(),
+	'#required' => TRUE,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('submit'),
+  );
+  return $form;
+}
+
+function test_output_2_submit($form, &$form_state) {
+  drupal_set_message("You selected '". $form_state['values']['types'] ."'.");
+  $form_state['redirect'] = 'test/' . $form_state['values']['info'] .'/'. $form_state['values']['types'];
+}

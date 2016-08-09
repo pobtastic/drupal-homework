@@ -1,0 +1,6 @@
+; $Id$
+name = Test
+description = "Drupal homework module for review purposes."
+package = Beamly
+version = VERSION
+core = 7.x
